@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  floci:
+    image: floci/floci:latest
+    container_name: benchmark-floci
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=dynamodb,s3
+
+  user-scv-quarkus:
+    build:
+      context: ./user-svc-quarkus
+      dockerfile: Dockerfile.native
+    ports:
+      - "8081:8080"
+    environment:
+      - AWS_ENDPOINT_URL=http://floci:4566 # Menembak ke internal network Docker
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'   # Batasi hanya menggunakan setengah Core CPU
+          memory: 128M   # Batasi RAM maksimal 128MB
+
+  user-svc-go:
+    build: ./user-svc-go
+    ports:
+      - "8082:8080"
+    environment:
+      - AWS_ENDPOINT_URL=http://floci:4566
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 128M
+
+  user-svc-rust:
+    build: ./user-svc-rust
+    ports:
+      - "8083:8080"
+    environment:
+      - AWS_ENDPOINT_URL=http://floci:4566
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 128M
